@@ -9,6 +9,9 @@ coverage
 # production
 build
 
+# vscode
+jsconfig.json
+
 # misc
 .DS_Store
 npm-debug.log
