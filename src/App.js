@@ -1,11 +1,10 @@
 import React, { Component } from 'react';
+import cx from 'classnames';
 import './App.css';
 
 /**
  *  Actions
  */
-import { createAction } from 'redux-actions';
-
 const SELECT_SECTION = 'SELECT_SECTION';
 function selectSection(section) {
   return {
@@ -50,9 +49,16 @@ function receiveStories(section, json) {
 function fetchStories(section) {
   return dispatch => {
     dispatch(requestStories(section));
-    return fetch(`https://hacker-news.firebaseio.com/v0/${section}`)
+    return fetch(`https://hacker-news.firebaseio.com/v0/${section}.json`)
       .then(response => response.json())
-      .then(json => dispatch(receiveStories(section, json)));
+      .then(ids => {
+        const stories = ids.slice(0,30).map(id => (
+          fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`))
+            .then(response => response.json())
+        );
+        Promise.all(stories)
+          .then(data => dispatch(receiveStories(section, data)))
+      });
   }
 }
 
@@ -164,17 +170,154 @@ const store = configureStore();
 
 
 /**
- * View
+ * Components
  */
-import { Provider } from 'react-redux';
+import { connect } from 'react-redux';
+
+const Picker = props => {
+  const { value, onChange, options } = props;
+  return (
+    <span>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+      >
+        {options.map(option => 
+          <option value={option} key={option}>
+            {option}
+          </option>
+        )}
+      </select>
+    </span>
+  );
+}
+
+const Stories = props => {
+  const { stories } = props;
+  return (
+    <ol>
+      {stories.map((story, i) =>
+        <li className="Story" key={i}>
+          <a href={story.url}>
+            {story.title} {story.type === 'story' && !!story.url &&
+              <small>({story.url.replace('https://', '').replace('http://', '').replace('www.', '').split('/')[0]})</small>
+            }
+          </a>
+          <div className="Story__details">
+            {story.score} points&nbsp;
+            by {story.by}&nbsp;&bull;&nbsp;
+            {story.descendants} comments
+          </div>
+        </li>
+      )}
+    </ol>
+  );
+};
+
+const Nav = props => {
+  const { value, onChange, options } = props;
+  return (
+    <nav className="Nav">
+      <div className="Brand">
+        HackerNews
+      </div>
+      {options.map(option => {
+        const classes = cx({
+          'NavItem--selected': option === value,
+        }, "NavItem");
+        return (
+          <div key={option}  className={classes} onClick={e => onChange(option)}>
+          {option.replace('stories', '')}
+          </div>
+        );
+      })} 
+    </nav>
+  );
+}
 
 class App extends Component {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+  }
+
+  componentDidMount() {
+    const { dispatch, selectedSection } = this.props;
+    dispatch(fetchStoriesIfNeeded(selectedSection));
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.selectedSection !== this.props.selectedSection) {
+      const { dispatch, selectedSection } = nextProps;
+      dispatch(fetchStoriesIfNeeded(selectedSection));
+    }
+  }
+
+  handleChange(nextSection) {
+    const { dispatch } = this.props;
+    dispatch(selectSection(nextSection));
+  }
+
   render() {
+    const { selectedSection, stories, isFetching } = this.props;
     return (
       <div className="App">
+        <Nav
+          value={selectedSection}
+          options={[
+            'topstories',
+            'newstories',
+            'beststories'
+          ]}
+          onChange={this.handleChange}
+        />
+        {isFetching && stories.length === 0 &&
+          <h2>Loading...</h2>
+        }
+        {!isFetching && stories.length === 0 &&
+          <h2>Empty</h2>
+        }
+        {stories.length > 0 &&
+          <div className="Stories" style={{ opacity: isFetching ? 0.5 : 1}}>
+            <Stories stories={stories} />
+          </div>
+        }
       </div>
     );
   }
 }
 
-export default App;
+function mapStateToProps(state) {
+  const { selectedSection, storiesBySection } = state;
+  const {
+    isFetching,
+    items: stories
+  } = storiesBySection[selectedSection] || {
+    isFetching: true,
+    items: []
+  };
+  return {
+    selectedSection,
+    stories,
+    isFetching
+  };
+}
+
+const AppContainer = connect(mapStateToProps)(App);
+
+/**
+ * Containers
+ */
+import { Provider } from 'react-redux';
+
+class Root extends Component {
+  render () {
+    return (
+      <Provider store={store}>
+        <AppContainer />
+      </Provider>
+    );
+  }
+}
+
+export default Root;
