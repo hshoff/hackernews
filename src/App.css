@@ -1,5 +1,43 @@
 body {
   background: #efefef;
+  overflow-x: hidden;
+}
+
+.App__Loader {
+  position: relative;
+  left: 0%;
+  right: 25%;
+  top: 0px;
+  width: 50%;
+  height: 2px;
+  pointer-events: none;
+  z-index: 10000;
+  border-radius: 2px;
+  opacity: 0;
+  transition: all 0.5s cubic-bezier(0.68, -0.25, 0.265, 1.25);
+  background-image: -webkit-linear-gradient( left , #FF9900, #FF6600);
+  transform: translate(-150%, 0);
+}
+
+.App__Loader--loading {
+  opacity: 1;
+  animation: 1.5s loading infinite;
+}
+
+
+@keyframes loading {
+  0% {
+    transform: translate(-150%, 0);
+  }
+  100% {
+    transform: translate(150%, 0);
+  }
+}
+
+.Comments {
+  cursor: pointer;
+  color: inherit;
+  text-decoration: none;
 }
 
 .Stories {
@@ -10,11 +48,31 @@ body {
   margin-left: 103px;
 }
 
+@media (max-width: 768px) {
+  .Stories {
+    margin-left: 0;
+  }
+}
+
 .Story {
   padding: 10px;
 }
 
-.Story a {
+.Story__placeholderTitle,
+.Story__placeholderDetails {
+  margin-top: 15px;
+  display: inline-block;
+  height: 20px;
+  background-color: #efefef;
+}
+
+.Story__placeholderDetails {
+  margin-top: 2px;
+  height: 10px;
+  margin-bottom: 10px;
+}
+
+.StoryTitle {
   font-weight: 900;
   color: #333;
   text-decoration: none;
@@ -33,6 +91,7 @@ body {
 }
 
 .Brand {
+  cursor: pointer;
   padding: 10px;
   color: white;
   font-weight: 900;
@@ -54,6 +113,7 @@ body {
 .NavItem {
   display: flex;
   padding: 10px;
+
 }
 
 .NavItem:hover {

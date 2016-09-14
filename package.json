@@ -3,6 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "devDependencies": {
+    "now": "^0.25.0",
+    "now-serve": "^0.4.0",
     "react-scripts": "0.4.1"
   },
   "dependencies": {
@@ -10,6 +12,7 @@
     "react": "^15.3.1",
     "react-dom": "^15.3.1",
     "react-redux": "^4.4.5",
+    "react-router": "^4.0.0-2",
     "redux": "^3.6.0",
     "redux-actions": "^0.12.0",
     "redux-logger": "^2.6.1",
